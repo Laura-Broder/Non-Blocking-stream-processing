@@ -1,19 +1,32 @@
-const { spawn } = require("child_process");
+const express = require("express");
+const startStream = require("./msgStreamer");
+const { filterData, countAll } = require("./processData");
 
-const exeFilePath =
-  "c:/Users/laura/DEV/Job-Interviews/BigPanda/generator-windows-amd64.exe";
-const getData = () => {
-  const ls = spawn(exeFilePath);
+const port = 4000;
 
-  ls.stdout.on("data", (data) => {
-    console.log(data.toString());
-  });
+const app = express();
 
-  ls.stderr.on("data", (data) => {
-    console.error(`stderr: ${data}`);
-  });
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-  ls.on("close", (code) => {
-    console.log(`child process exited with code ${code}`);
-  });
+// init in-memory variable for the count
+let msgStream = [];
+
+// callback function to save the stats
+const saveStream = (msg) => {
+  const cleanData = filterData(msg);
+  if (cleanData.length) {
+    msgStream.push(...cleanData);
+  }
 };
+
+// start the count on server load
+startStream(saveStream);
+
+// get count
+app.get("/count", function (req, res) {
+  const currentCount = countAll(msgStream);
+  res.send(currentCount);
+});
+
+app.listen(port, () => console.log(`Listening on port ${port}`));
