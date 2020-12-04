@@ -4,6 +4,9 @@ const startStream = (callback) => {
   const ls = spawn("./generator-windows-amd64.exe");
 
   ls.stdout.on("data", (data) => {
+    // ----------------------------------------------------
+    // convert massage steam to string and split on line break
+    // ----------------------------------------------------
     const msg = data.toString().split("\n");
     callback(msg);
   });
